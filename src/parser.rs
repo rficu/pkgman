@@ -70,3 +70,15 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
 
     return Ok(res)
 }
+
+pub fn parseconfig(_fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
+    let mut res: Vec<PkgInfo> = Vec::new();
+
+    res.push(PkgInfo {
+            name:      "zzz".to_string(),
+            version:   "zzz".to_string(),
+            ipfs_hash: "zzz".to_string()
+        });
+
+    return Ok(res);
+}
