@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 config = "0.10"
+clap = "2.33"
+toml = "0.4.2"
+serde = { version = "1.0", features = ["derive"] }
