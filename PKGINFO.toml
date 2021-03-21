@@ -1,3 +1,12 @@
-name = "gcc"
-version = "7.1.1 20170630"
-ipfs_hash = "QmRW3V9znzFW9M5FYbitSEvd5dQ"
+author_name = "rficu"
+author_email = "rficu@gmail.com"
+
+[[packages]]
+	name = "gcc"
+	version = "7.1.1 20170630"
+	ipfs_hash = "QmRW3V9znzFW9M5FYbitSEvd5dQ"
+
+[[packages]]
+	name = "x264"
+	version = "v2.0.0"
+	ipfs_hash = "QmRW3V9znzFW9M5FYbitSIA567D"
