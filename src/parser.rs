@@ -1,26 +1,72 @@
 extern crate config;
+extern crate toml;
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::ErrorKind;
+use serde::Deserialize;
 
-pub struct PkgInfo {
-    pub ipfs_hash: String, // mandatory
-    pub name:      String, // mandatory
-    pub ver:       String  // mandatory
+#[derive(Debug)]
+pub enum ParserError {
+    GenericError,
+    ReadError,
+    NotFoundError,
+    EmptyFileError
 }
 
-pub fn tryparse(fname: &String) -> PkgInfo {
+#[derive(Debug)]
+pub struct PkgInfo {
+    pub name:      String, // mandatory
+    pub version:   String, // mandatory
+    pub ipfs_hash: String  // mandatory
+}
+
+#[derive(Debug, Deserialize)]
+struct Config {
+    global_str: Option<String>,
+    packages:   Option<Vec<PeerConfig>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct PeerConfig {
+    name:      Option<String>, // mandatory
+    version:   Option<String>, // mandatory
+    ipfs_hash: Option<String>  // mandatory
+}
+
+pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
     let mut contents = String::new();
-    let mut f = File::open(fname).expect("File not found!");
-    f.read_to_string(&mut contents).expect("Failed to read file contents!");
 
-    let mut settings = config::Config::default();
+    let mut f = match File::open(fname) {
+        Ok(val)  => val,
+        Err(err) => match err.kind() {
+            ErrorKind::NotFound => return Err(ParserError::NotFoundError),
+            _                   => return Err(ParserError::GenericError),
+        }
+    };
 
-    settings.merge(config::File::with_name(fname)).unwrap();
-
-    PkgInfo {
-        ipfs_hash: settings.get::<String>("ipfs_hash").unwrap(),
-        name:      settings.get::<String>("name").unwrap(),
-        ver:       settings.get::<String>("version").unwrap()
+    match f.read_to_string(&mut contents) {
+        Ok(_)  => (),
+        Err(_) => return Err(ParserError::ReadError)
     }
+
+    // TODO check error
+    let config: Config = toml::from_str(&contents).unwrap();
+
+    if !config.packages.is_some() {
+        println!("Input file does not contain any packages!");
+        return Err(ParserError::EmptyFileError);
+    }
+
+    let mut res: Vec<PkgInfo> = Vec::new();
+
+    for val in config.packages.unwrap() {
+        res.push(PkgInfo {
+            name:      val.name.unwrap(),
+            version:   val.ipfs_hash.unwrap(),
+            ipfs_hash: val.version.unwrap()
+        });
+    }
+
+    return Ok(res)
 }
