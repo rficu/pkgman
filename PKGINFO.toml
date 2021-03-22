@@ -3,10 +3,12 @@ author_email = "rficu@gmail.com"
 
 [[packages]]
 	name = "gcc"
-	version = "7.1.1 20170630"
-	ipfs_hash = "QmRW3V9znzFW9M5FYbitSEvd5dQ"
+	version = "10.0.2"
+	path = "/usr/bin/gcc"
+	sha265 = "4ce09730ea4670375f4179994ef637c249ec06c4abd835a7b98b311e3b529c89"
 
 [[packages]]
 	name = "x264"
-	version = "v2.0.0"
-	ipfs_hash = "QmRW3V9znzFW9M5FYbitSIA567D"
+	version = "0.160.3011 cde9a93"
+	path = "/usr/bin/x264"
+	sha265 = "40cddc5f4aabf5994c42e852088209dc644e0b6a751bfb43cb2c5c182366ffee"

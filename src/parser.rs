@@ -16,22 +16,26 @@ pub enum ParserError {
 
 #[derive(Debug)]
 pub struct PkgInfo {
-    pub name:      String, // mandatory
-    pub version:   String, // mandatory
-    pub ipfs_hash: String  // mandatory
+    pub name:    String,
+    pub version: String,
+    pub path:    String,
+    pub sha265:  String,
+    pub ipfs:    String
 }
 
 #[derive(Debug, Deserialize)]
 struct Config {
     global_str: Option<String>,
-    packages:   Option<Vec<PeerConfig>>,
+    packages:   Option<Vec<PkgInfoInternal>>,
 }
 
 #[derive(Debug, Deserialize)]
-struct PeerConfig {
-    name:      Option<String>, // mandatory
-    version:   Option<String>, // mandatory
-    ipfs_hash: Option<String>  // mandatory
+struct PkgInfoInternal {
+    name:    Option<String>,
+    version: Option<String>,
+    path:    Option<String>,
+    sha265:  Option<String>,
+    ipfs:    Option<String>
 }
 
 pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
@@ -62,23 +66,13 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
 
     for val in config.packages.unwrap() {
         res.push(PkgInfo {
-            name:      val.name.unwrap(),
-            version:   val.ipfs_hash.unwrap(),
-            ipfs_hash: val.version.unwrap()
+            name:    val.name.unwrap(),
+            version: val.version.unwrap(),
+            sha265:  val.sha265.unwrap(),
+            path:    val.path.unwrap(),
+            ipfs:    String::new()
         });
     }
 
     return Ok(res)
-}
-
-pub fn parseconfig(_fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
-    let mut res: Vec<PkgInfo> = Vec::new();
-
-    res.push(PkgInfo {
-            name:      "zzz".to_string(),
-            version:   "zzz".to_string(),
-            ipfs_hash: "zzz".to_string()
-        });
-
-    return Ok(res);
 }
