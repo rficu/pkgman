@@ -38,9 +38,15 @@ fn download(name: &str) {
 fn query(name: &str) {
     let pkg_info = match network::query(name) {
         Ok(info) => info,
-        Err(err) => {
-            println!("Error occurred: {:#?}", err);
-            return ();
+        Err(err) => match err {
+            network::IPFSError::NotFound => {
+                println!("Package {} not found on the network", name);
+                return;
+            },
+            _ => {
+                println!("Error occurred: {:#?}", err);
+                return;
+            }
         }
     };
 
