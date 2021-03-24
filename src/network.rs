@@ -28,7 +28,6 @@ struct Response {
     info: Vec<parser::PkgInfo>
 }
 
-// TODO explain what this function does
 pub fn query(package: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
     let mut data = [0 as u8; 1024];
@@ -101,15 +100,55 @@ pub fn update(_config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
     Ok(())
 }
 
-pub fn download(_name: &str) -> Result<(), IPFSError> {
+pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
+
+    let mut pkgs = parser::parsefile(&parser::expand("pkglist.toml")).unwrap();
+
+    match query(name) {
+        Ok(pkg) => {
+            // make sure we don't have the latest version of the software already
+            let mut idx: usize = usize::MAX;
+
+            for (i, our_pkg) in pkgs.iter().enumerate() {
+                if our_pkg.name == pkg.name {
+                    idx = i;
+                    if our_pkg.version == pkg.version {
+                        return Err(ipfs::IPFSError::AlreadyExists);
+                    }
+                }
+            }
+
+            let ret = ipfs::download(&pkg.name, &pkg.ipfs).await;
+
+            if ret != ipfs::IPFSError::Success {
+                return Err(ret);
+            }
+
+            if idx != usize::MAX {
+                pkgs[0].ipfs    = pkg.ipfs.clone();
+                pkgs[0].version = pkg.version.clone();
+            } else {
+                pkgs.push(pkg);
+            }
+
+            parser::updatefile("pkglist.toml", pkgs);
+            return Ok(());
+        },
+        Err(err) => {
+            return Err(err);
+        }
+    }
+}
+
+fn add_pkg(_package: &parser::PkgInfo) -> Result<(), ipfs::IPFSError> {
+
+    // TODO send package name, version and sha256 to bootstrap
+    // TODO get accept/reject from remote
+
     Ok(())
 }
 
-fn add_pkg(_package: &parser::PkgInfo) -> Result<(), IPFSError> {
-    Ok(())
-}
-
-pub fn add(pkgs: &Vec<parser::PkgInfo>) -> Result<(), IPFSError> {
+pub fn add(pkgs: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
 
     for pkg in pkgs {
         let res = add_pkg(pkg);
