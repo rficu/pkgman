@@ -7,6 +7,7 @@ use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
 
 use crate::parser;
+use crate::ipfs;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Commands {
@@ -22,7 +23,82 @@ struct Request {
     info: Vec<parser::PkgInfo>
 }
 
-pub fn update(_config: &Vec<parser::PkgInfo>) -> Result<(), IPFSError> {
+#[derive(Debug, Serialize, Deserialize)]
+struct Response {
+    status: ipfs::IPFSError,
+    info: Vec<parser::PkgInfo>
+}
+
+// TODO explain what this function does
+pub fn query(package: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
+
+    let mut data = [0 as u8; 1024];
+    let mut ret  = parser::PkgInfo {
+        name:    String::new(),
+        version: String::new(),
+        path:    String::new(),
+        sha256:  String::new(),
+        ipfs:    String::new()
+    };
+
+    match TcpStream::connect("127.0.0.1:3333") {
+        Ok(mut stream) => {
+            let mut request = Request {
+                cmd: Commands::Query,
+                info: Vec::new()
+            };
+
+            request.info.push(parser::PkgInfo {
+                name:    package.to_string(),
+                version: String::new(),
+                path:    String::new(),
+                sha256:  String::new(),
+                ipfs:    String::new()
+            });
+
+            stream.write(
+                toml::to_string(&request)
+                .unwrap()
+                .as_bytes()
+            ).unwrap();
+
+            match stream.read(&mut data) {
+                Ok(size) => {
+                    let res: Response = toml::from_str(
+                        std::str::from_utf8(&data[0..size]).unwrap()
+                    ).unwrap();
+
+                    if res.status != ipfs::IPFSError::Success {
+                        return Err(res.status);
+                    }
+
+                    ret.name    = res.info[0].name.clone();
+                    ret.version = res.info[0].version.clone();
+                    ret.sha256  = res.info[0].sha256.clone();
+                    ret.ipfs    = res.info[0].ipfs.clone();
+                },
+                Err(e) => {
+                    println!("Failed to receive data: {}", e);
+                    return Err(ipfs::IPFSError::Unknown);
+                }
+            }
+        },
+        Err(e) => {
+            println!("Failed to connect: {}", e);
+            return Err(ipfs::IPFSError::UnableToConnect);
+        }
+    }
+
+    return Ok(ret);
+}
+
+pub fn update(_config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
+
+    // TODO send a list of package names to bootstrap
+    // TODO bootstrap returns a list of valid packages with their version and ipfs hash
+    // TODO compare version and update all new packages
+    // TODO
+
     Ok(())
 }
 
@@ -45,6 +121,38 @@ pub fn add(pkgs: &Vec<parser::PkgInfo>) -> Result<(), IPFSError> {
     }
 
     Ok(())
+}
+
+fn handle_query(
+    stream:  &mut TcpStream,
+    map:     &HashMap<&String, &parser::PkgInfo>,
+    request: &Request)
+{
+    let mut response = Response {
+        status: ipfs::IPFSError::Success,
+        info: Vec::new()
+    };
+
+    match map.get(&request.info[0].name) {
+        Some(pkg) => {
+            response.info.push(parser::PkgInfo {
+                name:    pkg.name.clone(),
+                version: pkg.version.clone(),
+                sha256:  pkg.sha256.clone(),
+                path:    String::new(),
+                ipfs:    pkg.ipfs.clone(),
+            });
+        },
+        None => {
+            response.status = ipfs::IPFSError::NotFound
+        }
+    };
+
+    stream.write(
+        toml::to_string(&response)
+        .unwrap()
+        .as_bytes()
+    ).unwrap();
 }
 
 pub fn bootstrap() {
@@ -80,7 +188,9 @@ pub fn bootstrap() {
                         ).unwrap();
 
                         match req.cmd {
-                            Commands::Query => { },
+                            Commands::Query => {
+                                handle_query(&mut stream, &map, &req);
+                            },
                             Commands::Add => { },
                             Commands::Upload => { },
                             Commands::Download => { }

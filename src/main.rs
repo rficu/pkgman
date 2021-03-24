@@ -3,6 +3,7 @@ use clap::{App, Arg, AppSettings};
 
 mod parser;
 mod network;
+mod ipfs;
 
 fn update() {
     let home  = std::env::var("HOME").unwrap();
@@ -36,10 +37,10 @@ fn download(name: &str) {
 }
 
 fn query(name: &str) {
-    let pkg_info = match network::query(name) {
+    let pkginfo = match network::query(name) {
         Ok(info) => info,
         Err(err) => match err {
-            network::IPFSError::NotFound => {
+            ipfs::IPFSError::NotFound => {
                 println!("Package {} not found on the network", name);
                 return;
             },
@@ -50,7 +51,11 @@ fn query(name: &str) {
         }
     };
 
-    println!("{:#?}", pkg_info);
+    println!("name:    {}\n\
+             version: {}\n\
+             sha256:  {}\n\
+             ipfs:    {}",
+             pkginfo.name, pkginfo.version, pkginfo.sha256, pkginfo.ipfs);
 }
 
 fn main() {

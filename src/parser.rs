@@ -4,7 +4,7 @@ extern crate toml;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::ErrorKind;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -14,12 +14,12 @@ pub enum ParserError {
     EmptyFileError
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PkgInfo {
     pub name:    String,
     pub version: String,
     pub path:    String,
-    pub sha265:  String,
+    pub sha256:  String,
     pub ipfs:    String
 }
 
@@ -34,7 +34,7 @@ struct PkgInfoInternal {
     name:    Option<String>,
     version: Option<String>,
     path:    Option<String>,
-    sha265:  Option<String>,
+    sha256:  Option<String>,
     ipfs:    Option<String>
 }
 
@@ -68,9 +68,9 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
         res.push(PkgInfo {
             name:    val.name.unwrap(),
             version: val.version.unwrap(),
-            sha265:  val.sha265.unwrap(),
+            sha256:  val.sha256.unwrap(),
             path:    val.path.unwrap(),
-            ipfs:    String::new()
+            ipfs:    val.ipfs.unwrap()
         });
     }
 
