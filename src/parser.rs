@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::ErrorKind;
 use serde::{Serialize, Deserialize};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -36,6 +37,18 @@ struct PkgInfoInternal {
     path:    Option<String>,
     sha256:  Option<String>,
     ipfs:    Option<String>
+}
+
+pub fn expand(config: &str) -> String {
+    let home  = std::env::var("HOME").unwrap();
+    let fname = PathBuf::from(format!("{}/.config/pkgman/{}", home, config));
+
+    if !Path::new(&fname).exists() {
+        println!("Config file not found!");
+        return String::new();
+    }
+
+    return fname.into_os_string().into_string().unwrap();
 }
 
 pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {

@@ -1,4 +1,3 @@
-use std::path::{Path, PathBuf};
 use clap::{App, Arg, AppSettings};
 
 mod parser;
@@ -6,17 +5,7 @@ mod network;
 mod ipfs;
 
 fn update() {
-    let home  = std::env::var("HOME").unwrap();
-    let fname = PathBuf::from(format!("{}/.config/pkgman/pkglist.toml", home));
-
-    if !Path::new(&fname).exists() {
-        println!("Config file not found!");
-        return;
-    }
-
-    let path = &fname.into_os_string().into_string().unwrap();
-
-    match network::add(&parser::parseconfig(path).unwrap()) {
+    match network::update(&parser::parsefile(&parser::expand("pkglist.toml")).unwrap()) {
         Ok(_)    => (),
         Err(err) => println!("Error occurred: {:#?}", err)
     };

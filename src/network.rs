@@ -4,7 +4,6 @@ use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use std::path::{Path, PathBuf};
 
 use crate::parser;
 use crate::ipfs;
@@ -158,22 +157,14 @@ fn handle_query(
 pub fn bootstrap() {
 
     // construct a hasmap of all the packages that are available on the network
-    let home  = std::env::var("HOME").unwrap();
-    let fname = PathBuf::from(format!("{}/.config/pkgman/pkglist_bootstrap.toml", home));
     let mut map: HashMap<&String, &parser::PkgInfo> = HashMap::new();
 
-    if !Path::new(&fname).exists() {
-        println!("Config file not found!");
-        return;
-    }
-
-    let pkgs = parser::parsefile(&fname.into_os_string().into_string().unwrap()).unwrap();
+    let listener = TcpListener::bind("127.0.0.1:3333").unwrap();
+    let pkgs     = parser::parsefile(&parser::expand("pkglist_bootstrap.toml")).unwrap();
 
     for (_, e) in pkgs.iter().enumerate() {
         map.insert(&e.name, e);
     }
-
-    let listener = TcpListener::bind("127.0.0.1:3333").unwrap();
 
     for stream in listener.incoming() {
         match stream {
