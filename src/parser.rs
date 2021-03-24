@@ -82,8 +82,8 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
             name:    val.name.unwrap(),
             version: val.version.unwrap(),
             sha256:  val.sha256.unwrap(),
-            path:    val.path.unwrap(),
-            ipfs:    val.ipfs.unwrap()
+            path:    val.path.unwrap_or_else(|| "".to_string()),
+            ipfs:    val.ipfs.unwrap_or_else(|| "".to_string())
         });
     }
 
