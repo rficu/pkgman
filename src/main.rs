@@ -58,6 +58,11 @@ fn main() {
     let matches = App::new("pkgman")
         .about("IPFS-based package manager for Linux")
         .setting(AppSettings::ArgRequiredElseHelp)
+        .arg(Arg::with_name("bootstrap")
+                 .short("b")
+                 .long("bootstrap")
+                 .takes_value(false)
+                 .help("Start the bootstrap node"))
         .arg(Arg::with_name("update")
                  .short("u")
                  .long("update")
@@ -80,7 +85,9 @@ fn main() {
                  .help("Query package"))
         .get_matches();
 
-    if matches.is_present("update") {
+    if matches.is_present("bootstrap") {
+        network::bootstrap();
+    } else if matches.is_present("update") {
         update();
     } else if matches.is_present("add") {
         add(matches.value_of("add").unwrap());
