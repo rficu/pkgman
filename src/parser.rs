@@ -1,6 +1,7 @@
 extern crate config;
 extern crate toml;
 
+use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::ErrorKind;
@@ -37,6 +38,11 @@ struct PkgInfoInternal {
     path:    Option<String>,
     sha256:  Option<String>,
     ipfs:    Option<String>
+}
+
+#[derive(Serialize)]
+struct ConfigWriter {
+    packages: Vec<PkgInfo>
 }
 
 pub fn expand(config: &str) -> String {
@@ -88,4 +94,22 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
     }
 
     return Ok(res)
+}
+
+pub fn updatefile(fname: &str, pkgs: Vec<PkgInfo>) {
+
+    let path = expand(fname);
+    fs::remove_file(&path);
+
+    let conf = ConfigWriter {
+        packages: pkgs
+    };
+
+    File::create(&path)
+    .unwrap()
+    .write_all(
+        toml::to_string(&conf)
+        .unwrap()
+        .as_bytes()
+    ).unwrap();
 }
