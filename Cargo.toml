@@ -5,7 +5,11 @@ authors = ["rficu <rficu@airmail.cc>"]
 edition = "2018"
 
 [dependencies]
-config = "0.10"
-clap = "2.33"
-toml = "0.4.2"
-serde = { version = "1.0", features = ["derive"] }
+config   = "0.10"
+clap     = "2.33"
+toml     = "0.4.2"
+serde    = { version = "1.0", features = ["derive"] }
+tokio    = { version = "0.2.*", features = ["full"] }
+futures  = "0.3"
+ipfs-api = { version = "0.11.0", features = ["with-actix"], default-features = false }
+actix-rt = "1"

@@ -1,3 +1,5 @@
+extern crate actix_rt;
+
 use clap::{App, Arg, AppSettings};
 
 mod parser;
@@ -18,10 +20,25 @@ fn add(fname: &str) {
     };
 }
 
-fn download(name: &str) {
-    match network::download(name) {
-        Ok(_)    => (),
-        Err(err) => println!("Error occurred: {:#?}", err)
+async fn download(name: &str) {
+    match network::download(name).await {
+        Ok(_) => {
+            println!("Package {} downloaded!", name);
+        },
+        Err(err) => match err {
+            ipfs::IPFSError::NotFound => {
+                println!("Package {} not found on the network!", name);
+                return;
+            },
+            ipfs::IPFSError::AlreadyExists => {
+                println!("{} is up to date!", name);
+                return;
+            },
+            _ => {
+                println!("Error occurred: {:#?}", err);
+                return;
+            }
+        }
     };
 }
 
@@ -47,7 +64,8 @@ fn query(name: &str) {
              pkginfo.name, pkginfo.version, pkginfo.sha256, pkginfo.ipfs);
 }
 
-fn main() {
+#[actix_rt::main]
+async fn main() {
 
     let matches = App::new("pkgman")
         .about("IPFS-based package manager for Linux")
@@ -86,7 +104,7 @@ fn main() {
     } else if matches.is_present("add") {
         add(matches.value_of("add").unwrap());
     } else if matches.is_present("download") {
-        download(matches.value_of("download").unwrap());
+        download(matches.value_of("download").unwrap()).await;
     } else {
         query(matches.value_of("query").unwrap());
     }
