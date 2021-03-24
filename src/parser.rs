@@ -99,7 +99,10 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
 pub fn updatefile(fname: &str, pkgs: Vec<PkgInfo>) {
 
     let path = expand(fname);
-    fs::remove_file(&path);
+
+    if fs::remove_file(&path).is_err() {
+        return;
+    }
 
     let conf = ConfigWriter {
         packages: pkgs
