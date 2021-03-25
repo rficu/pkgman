@@ -29,6 +29,23 @@ pub async fn upload(pkg: &parser::PkgInfo) -> Result<String, IPFSError> {
     }
 }
 
-pub async fn download(name: &String, ipfs_hash: &String) -> IPFSError {
+pub async fn download(pkg: &parser::PkgInfo) -> IPFSError {
+    let client = IpfsClient::default();
+
+    match client
+        .cat(&pkg.ipfs)
+        .map_ok(|chunk| chunk.to_vec())
+        .try_concat()
+        .await
+    {
+        Ok(res) => {
+            File::create(format!("{}/{}", "packages", pkg.name))
+                .unwrap()
+                .write_all(&res)
+                .unwrap();
+        }
+        Err(e) => println!("error getting file: {}", e)
+    }
+
     return IPFSError::Success;
 }
