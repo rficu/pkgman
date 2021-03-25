@@ -14,3 +14,4 @@ futures         = "0.3"
 ipfs-api        = { version = "0.11.0", features = ["with-actix"], default-features = false }
 actix-rt        = "1"
 version-compare = "0.0.11"
+sha2            = "0.9.3"

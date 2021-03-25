@@ -4,6 +4,7 @@ use std::io::Write;
 use futures::TryStreamExt;
 use std::fs::File;
 use crate::parser;
+use sha2::{Sha256, Digest};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum IPFSError {
@@ -12,7 +13,8 @@ pub enum IPFSError {
     NotFound,
     AlreadyExists,
     UnableToConnect,
-    NewerExists
+    NewerExists,
+    ChecksumMistmatch
 }
 
 pub async fn upload(pkg: &parser::PkgInfo) -> Result<String, IPFSError> {
@@ -39,6 +41,13 @@ pub async fn download(pkg: &parser::PkgInfo) -> IPFSError {
         .await
     {
         Ok(res) => {
+            let mut sha256 = Sha256::new();
+            sha256.update(&res);
+
+            if pkg.sha256 != format!("{:x}", sha256.finalize()) {
+                return IPFSError::ChecksumMistmatch;
+            }
+
             File::create(format!("{}/{}", "packages", pkg.name))
                 .unwrap()
                 .write_all(&res)
