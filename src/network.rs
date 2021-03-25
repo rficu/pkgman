@@ -126,8 +126,8 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
             }
 
             if idx != usize::MAX {
-                pkgs[0].ipfs    = pkg.ipfs.clone();
-                pkgs[0].version = pkg.version.clone();
+                pkgs[idx].ipfs    = pkg.ipfs.clone();
+                pkgs[idx].version = pkg.version.clone();
             } else {
                 pkgs.push(pkg);
             }
