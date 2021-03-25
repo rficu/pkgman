@@ -6,8 +6,8 @@ mod parser;
 mod network;
 mod ipfs;
 
-fn update() {
-    match network::update(&parser::parsefile(&parser::expand("pkglist.toml")).unwrap()) {
+async fn update() {
+    match network::update(&parser::parsefile(&parser::expand("pkglist.toml")).unwrap()).await {
         Ok(_)    => (),
         Err(err) => println!("Error occurred: {:#?}", err)
     };
@@ -100,7 +100,7 @@ async fn main() {
     if matches.is_present("bootstrap") {
         network::bootstrap();
     } else if matches.is_present("update") {
-        update();
+        update().await;
     } else if matches.is_present("add") {
         add(matches.value_of("add").unwrap()).await;
     } else if matches.is_present("download") {
