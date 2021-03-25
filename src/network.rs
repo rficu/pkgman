@@ -314,6 +314,41 @@ fn handle_upload(
     }
 }
 
+fn handle_update(
+    stream:  &mut TcpStream,
+    map:     &HashMap<String, parser::PkgInfo>,
+    request: &Request)
+{
+    let mut response = Response {
+        status: ipfs::IPFSError::Success,
+        info: Vec::new()
+    };
+
+    for pkg in &request.info {
+        match map.get(&pkg.name) {
+            Some(found_pkg) => {
+                println!("package found on the server");
+
+                match VersionCompare::compare(&found_pkg.version, &pkg.version).unwrap() {
+                    CompOp::Gt => response.info.push(pkg.clone()),
+                    _ => {
+                        println!("package up to date");
+                    }
+                }
+            },
+            None => {
+                println!("Client has an unregistered package!");
+            }
+        }
+    }
+
+    stream.write(
+        toml::to_string(&response)
+        .unwrap()
+        .as_bytes()
+    ).unwrap();
+}
+
 pub fn bootstrap() {
 
     // construct a hasmap of all the packages that are available on the network
@@ -345,7 +380,9 @@ pub fn bootstrap() {
                             Commands::Upload => {
                                 handle_upload(&mut stream, &mut map, &mut req);
                             },
-                            Commands::Update => { }
+                            Commands::Update => {
+                                handle_update(&mut stream, &map, &req);
+                            }
                         }
                     },
                     Err(_) => {
