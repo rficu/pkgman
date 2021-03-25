@@ -91,12 +91,42 @@ pub fn query(package: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
     return Ok(ret);
 }
 
-pub fn update(_config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
+pub async fn update(config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
 
-    // TODO send a list of package names to bootstrap
-    // TODO bootstrap returns a list of valid packages with their version and ipfs hash
-    // TODO compare version and update all new packages
-    // TODO
+    let mut data = [0 as u8; 1024];
+
+    match TcpStream::connect("127.0.0.1:3333") {
+        Ok(mut stream) => {
+            let mut request = Request {
+                cmd: Commands::Update,
+                info: config.to_vec()
+            };
+
+            stream.write(
+                toml::to_string(&request)
+                .unwrap()
+                .as_bytes()
+            ).unwrap();
+
+            match stream.read(&mut data) {
+                Ok(size) => {
+                    let res: Response = toml::from_str(
+                        std::str::from_utf8(&data[0..size]).unwrap()
+                    ).unwrap();
+
+                    for pkg in res.info {
+                        download(&pkg.name).await;
+                    }
+                },
+                Err(err) => {
+                    println!("Error occurred: {}", err);
+                }
+            }
+        },
+        Err(err) => {
+            println!("Error occurred: {}", err);
+        }
+    }
 
     Ok(())
 }
