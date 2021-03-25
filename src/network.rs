@@ -13,9 +13,8 @@ use crate::ipfs;
 #[derive(Debug, Serialize, Deserialize)]
 enum Commands {
     Query,
-    Add,
     Upload,
-    Download
+    Update
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -120,7 +119,7 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
                 }
             }
 
-            let ret = ipfs::download(&pkg.name, &pkg.ipfs).await;
+            let ret = ipfs::download(&pkg).await;
 
             if ret != ipfs::IPFSError::Success {
                 return Err(ret);
@@ -142,24 +141,88 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
     }
 }
 
-fn add_pkg(_package: &parser::PkgInfo) -> Result<(), ipfs::IPFSError> {
+async fn upload_pkg(pkg: &parser::PkgInfo) -> Result<String, ipfs::IPFSError> {
 
-    // TODO send package name, version and sha256 to bootstrap
-    // TODO get accept/reject from remote
+    let mut data = [0 as u8; 1024];
 
-    Ok(())
+    match TcpStream::connect("127.0.0.1:3333") {
+        Ok(mut stream) => {
+            let mut request = Request {
+                cmd: Commands::Upload,
+                info: Vec::new()
+            };
+
+            request.info.push(parser::PkgInfo {
+                name:    pkg.name.clone(),
+                version: pkg.version.clone(),
+                path:    String::new(),
+                sha256:  pkg.sha256.clone(),
+                ipfs:    String::new()
+            });
+
+            stream.write(
+                toml::to_string(&request)
+                .unwrap()
+                .as_bytes()
+            ).unwrap();
+
+            match stream.read(&mut data) {
+                Ok(size) => {
+                    let res: Response = toml::from_str(
+                        std::str::from_utf8(&data[0..size]).unwrap()
+                    ).unwrap();
+
+                    if res.status != ipfs::IPFSError::Success {
+                        return Err(res.status);
+                    }
+
+                    match ipfs::upload(&pkg).await {
+                        Ok(ipfs) => {
+                            stream.write(&ipfs.as_bytes()).unwrap();
+                            return Ok(ipfs);
+                        },
+                        Err(err) => {
+                            return Err(err);
+                        }
+                    }
+                },
+                Err(e) => {
+                    println!("Failed to receive data: {}", e);
+                    return Err(ipfs::IPFSError::Unknown);
+                }
+            }
+        },
+        Err(_) => return Err(ipfs::IPFSError::UnableToConnect)
+    }
 }
 
-pub fn add(pkgs: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
+pub async fn add(pkgs: &mut Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
+
+    let mut own_pkgs = parser::parsefile(&parser::expand("pkglist.toml")).unwrap();
 
     for pkg in pkgs {
-        let res = add_pkg(pkg);
-
-        if res.is_err() {
-            return Err(res.err().unwrap());
+        match upload_pkg(pkg).await {
+            Ok(ipfs) => {
+                // TODO remove "pkg.name" from "own_pkgs" (hashmap?)
+                own_pkgs.push(parser::PkgInfo {
+                    name:    pkg.name.clone(),
+                    version: pkg.version.clone(),
+                    path:    String::new(),
+                    sha256:  pkg.sha256.clone(),
+                    ipfs:    ipfs.clone()
+                });
+            },
+            Err(err) => {
+                match err {
+                    ipfs::IPFSError::AlreadyExists => println!("{} up to date with server's version!", pkg.name),
+                    ipfs::IPFSError::NewerExists => println!("{} is older than server's version!", pkg.name),
+                    _ => println!("{:#?}", err)
+                }
+            }
         }
     }
 
+    parser::updatefile("pkglist.toml", own_pkgs);
     Ok(())
 }
 
