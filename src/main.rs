@@ -13,8 +13,8 @@ fn update() {
     };
 }
 
-fn add(fname: &str) {
-    match network::add(&parser::parsefile(fname).unwrap()) {
+async fn add(fname: &str) {
+    match network::add(&mut parser::parsefile(fname).unwrap()).await {
         Ok(_)    => (),
         Err(err) => println!("Error occurred: {:#?}", err)
     };
@@ -102,7 +102,7 @@ async fn main() {
     } else if matches.is_present("update") {
         update();
     } else if matches.is_present("add") {
-        add(matches.value_of("add").unwrap());
+        add(matches.value_of("add").unwrap()).await;
     } else if matches.is_present("download") {
         download(matches.value_of("download").unwrap()).await;
     } else {
