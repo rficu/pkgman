@@ -16,7 +16,7 @@ pub enum ParserError {
     EmptyFileError
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PkgInfo {
     pub name:    String,
     pub version: String,

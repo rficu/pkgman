@@ -1,9 +1,11 @@
 extern crate toml;
+extern crate version_compare;
 
 use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
+use version_compare::{CompOp, VersionCompare};
 
 use crate::parser;
 use crate::ipfs;
@@ -163,7 +165,7 @@ pub fn add(pkgs: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
 
 fn handle_query(
     stream:  &mut TcpStream,
-    map:     &HashMap<&String, &parser::PkgInfo>,
+    map:     &HashMap<String, parser::PkgInfo>,
     request: &Request)
 {
     let mut response = Response {
@@ -193,16 +195,72 @@ fn handle_query(
     ).unwrap();
 }
 
+fn handle_upload(
+    stream:  &mut TcpStream,
+    map:     &mut HashMap<String, parser::PkgInfo>,
+    request: &mut Request)
+{
+    let mut response = Response {
+        status: ipfs::IPFSError::Success,
+        info: Vec::new()
+    };
+
+    match map.get(&request.info[0].name) {
+        Some(pkg) => {
+            // package already exists in the network
+            //
+            // compare version numbers, if the version of the received package
+            // is equal to or smaller than the version of the package that the network
+            // has, the package is rejected
+            //
+            // if the package is newer, it is accepted
+            match VersionCompare::compare(&pkg.version, &request.info[0].version).unwrap() {
+                CompOp::Lt => response.status = ipfs::IPFSError::Success,
+                CompOp::Eq => response.status = ipfs::IPFSError::AlreadyExists,
+                CompOp::Gt => response.status = ipfs::IPFSError::NewerExists,
+                _ => unreachable!()
+            }
+        },
+        None => {
+            // new package
+        }
+    };
+
+    stream.write(
+        toml::to_string(&response)
+        .unwrap()
+        .as_bytes()
+    ).unwrap();
+
+    if response.status == ipfs::IPFSError::Success {
+        let mut ipfs = [0 as u8; 64];
+
+        match stream.read(&mut ipfs) {
+            Ok(size) => {
+                // remove the old version of the package from the hashmap
+                // and add a new entry with updated/new fields
+                request.info[0].ipfs = std::str::from_utf8(&ipfs[0..size]).unwrap().to_string();
+                map.remove(&request.info[0].name);
+                map.insert(request.info[0].name.clone(), request.info[0].clone());
+                println!("Package {} added or updated to version {}", request.info[0].name, request.info[0].version);
+            },
+            Err(err) => {
+                println!("Failed to receive an IPFS hash from the client: {:#?}", err);
+            }
+        }
+    }
+}
+
 pub fn bootstrap() {
 
     // construct a hasmap of all the packages that are available on the network
-    let mut map: HashMap<&String, &parser::PkgInfo> = HashMap::new();
+    let mut map: HashMap<String, parser::PkgInfo> = HashMap::new();
 
     let listener = TcpListener::bind("127.0.0.1:3333").unwrap();
     let pkgs     = parser::parsefile(&parser::expand("pkglist_bootstrap.toml")).unwrap();
 
     for (_, e) in pkgs.iter().enumerate() {
-        map.insert(&e.name, e);
+        map.insert(e.name.clone(), e.clone());
     }
 
     for stream in listener.incoming() {
@@ -213,7 +271,7 @@ pub fn bootstrap() {
 
                 match stream.read(&mut data) {
                     Ok(size) => {
-                        let req: Request = toml::from_str(
+                        let mut req: Request = toml::from_str(
                             std::str::from_utf8(&data[0..size]).unwrap()
                         ).unwrap();
 
@@ -221,9 +279,10 @@ pub fn bootstrap() {
                             Commands::Query => {
                                 handle_query(&mut stream, &map, &req);
                             },
-                            Commands::Add => { },
-                            Commands::Upload => { },
-                            Commands::Download => { }
+                            Commands::Upload => {
+                                handle_upload(&mut stream, &mut map, &mut req);
+                            },
+                            Commands::Update => { }
                         }
                     },
                     Err(_) => {
