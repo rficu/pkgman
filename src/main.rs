@@ -2,9 +2,10 @@ extern crate actix_rt;
 
 use clap::{App, Arg, AppSettings};
 
-mod parser;
-mod network;
+mod daemon;
 mod ipfs;
+mod network;
+mod parser;
 
 async fn update() {
     match network::update(&parser::parsefile(&parser::expand("pkglist.toml")).unwrap()).await {
@@ -70,11 +71,11 @@ async fn main() {
     let matches = App::new("pkgman")
         .about("IPFS-based package manager for Linux")
         .setting(AppSettings::ArgRequiredElseHelp)
-        .arg(Arg::with_name("bootstrap")
-                 .short("b")
-                 .long("bootstrap")
+        .arg(Arg::with_name("daemon")
+                 .short("e")
+                 .long("daemon")
                  .takes_value(false)
-                 .help("Start the bootstrap node"))
+                 .help("Start pkgman as a daemon"))
         .arg(Arg::with_name("update")
                  .short("u")
                  .long("update")
@@ -97,8 +98,8 @@ async fn main() {
                  .help("Query package"))
         .get_matches();
 
-    if matches.is_present("bootstrap") {
-        network::bootstrap();
+    if matches.is_present("daemon") {
+        daemon::daemon().await;
     } else if matches.is_present("update") {
         update().await;
     } else if matches.is_present("add") {

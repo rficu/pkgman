@@ -7,6 +7,7 @@ use std::io::prelude::*;
 use std::io::ErrorKind;
 use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum ParserError {
@@ -94,6 +95,45 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
     }
 
     return Ok(res)
+}
+
+pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError> {
+    let mut contents = String::new();
+
+    let mut f = match File::open(fname) {
+        Ok(val)  => val,
+        Err(err) => match err.kind() {
+            ErrorKind::NotFound => return Err(ParserError::NotFoundError),
+            _                   => return Err(ParserError::GenericError),
+        }
+    };
+
+    match f.read_to_string(&mut contents) {
+        Ok(_)  => (),
+        Err(_) => return Err(ParserError::ReadError)
+    }
+
+    let config: Config = toml::from_str(&contents).unwrap();
+
+    if !config.packages.is_some() {
+        println!("Input file does not contain any packages!");
+        return Err(ParserError::EmptyFileError);
+    }
+
+    let mut map: HashMap<String, PkgInfo> = HashMap::new();
+
+    for val in config.packages.unwrap() {
+        let pkgname = val.name.unwrap();
+        map.insert(pkgname.clone(), PkgInfo {
+            name:    pkgname.clone(),
+            version: val.version.unwrap(),
+            sha256:  val.sha256.unwrap(),
+            path:    val.path.unwrap_or_else(|| "".to_string()),
+            ipfs:    val.ipfs.unwrap_or_else(|| "".to_string())
+        });
+    }
+
+    return Ok(map)
 }
 
 pub fn updatefile(fname: &str, pkgs: Vec<PkgInfo>) {

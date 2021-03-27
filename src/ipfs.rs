@@ -17,6 +17,13 @@ pub enum IPFSError {
     ChecksumMistmatch
 }
 
+pub static PUBSUB_TOPIC_QUERY:     &'static str = "pkgman_sub_query";
+pub static PUBSUB_TOPIC_QURY_RESP: &'static str = "pkgman_sub_query_response";
+
+pub fn get_client() -> IpfsClient {
+    return IpfsClient::default();
+}
+
 pub async fn upload(pkg: &parser::PkgInfo) -> Result<String, IPFSError> {
 
     let client = IpfsClient::default();
