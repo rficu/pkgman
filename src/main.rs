@@ -8,7 +8,7 @@ mod network;
 mod parser;
 
 async fn update() {
-    match network::update(&parser::parsefile(&parser::expand("pkglist.toml")).unwrap()).await {
+    match network::update().await {
         Ok(_)    => (),
         Err(err) => println!("Error occurred: {:#?}", err)
     };
