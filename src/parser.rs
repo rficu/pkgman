@@ -99,6 +99,7 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
 
 pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError> {
     let mut contents = String::new();
+    let mut map: HashMap<String, PkgInfo> = HashMap::new();
 
     let mut f = match File::open(fname) {
         Ok(val)  => val,
@@ -116,11 +117,8 @@ pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError
     let config: Config = toml::from_str(&contents).unwrap();
 
     if !config.packages.is_some() {
-        println!("Input file does not contain any packages!");
-        return Err(ParserError::EmptyFileError);
+        return Ok(map);
     }
-
-    let mut map: HashMap<String, PkgInfo> = HashMap::new();
 
     for val in config.packages.unwrap() {
         let pkgname = val.name.unwrap();
