@@ -26,6 +26,13 @@ pub struct PkgInfo {
     pub ipfs:    String
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct KeyringEntry {
+    pub name:  String,
+    pub email: String,
+    pub key:   String
+}
+
 #[derive(Debug, Deserialize)]
 struct Config {
     global_str: Option<String>,

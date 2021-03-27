@@ -1,6 +1,12 @@
 extern crate actix_rt;
+extern crate config;
 
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 use clap::{App, Arg, AppSettings};
+use std::path::{Path, PathBuf};
+use serde::{Serialize, Deserialize};
 
 mod daemon;
 mod ipfs;
@@ -65,6 +71,50 @@ async fn query(name: &str) {
              pkginfo.name, pkginfo.version, pkginfo.sha256, pkginfo.ipfs);
 }
 
+fn init() {
+
+    let home    = std::env::var("HOME").unwrap();
+    let base    = PathBuf::from(format!("{}/.config/pkgman/", home));
+    let config  = PathBuf::from(format!("{}/.config/pkgman/PKGLIST.toml", home));
+    let keyring = PathBuf::from(format!("{}/.config/pkgman/KEYRING.toml", home));
+
+    if !Path::new(&base).exists() {
+        fs::create_dir(base).unwrap();
+    }
+
+    if !Path::new(&keyring).exists() {
+        // TODO move this code to parser
+        #[derive(Debug, Deserialize, Serialize)]
+        struct KeyringWriter {
+            signers: Vec<parser::KeyringEntry>
+        }
+
+        let mut vec: Vec<parser::KeyringEntry> = Vec::new();
+        let init_entry = parser::KeyringEntry {
+            name:  String::from("rficu"),
+            email: String::from("rficu@email.com"),
+            key:   String::from("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y=")
+        };
+        vec.push(init_entry);
+
+        let conf = KeyringWriter {
+            signers: vec
+        };
+
+        File::create(&keyring)
+        .unwrap()
+        .write_all(
+            toml::to_string(&conf)
+            .unwrap()
+            .as_bytes()
+        ).unwrap();
+    }
+
+    if !Path::new(&config).exists() {
+        File::create(&config).unwrap();
+    }
+}
+
 #[actix_rt::main]
 async fn main() {
 
@@ -96,6 +146,11 @@ async fn main() {
                  .long("query")
                  .takes_value(true)
                  .help("Query package"))
+        .arg(Arg::with_name("init")
+                 .short("i")
+                 .long("init")
+                 .takes_value(false)
+                 .help("Create ~/.config/pkgman/{keyring/,PKGLIST.toml} files"))
         .get_matches();
 
     if matches.is_present("daemon") {
@@ -106,6 +161,8 @@ async fn main() {
         add(matches.value_of("add").unwrap()).await;
     } else if matches.is_present("download") {
         download(matches.value_of("download").unwrap()).await;
+    } else if matches.is_present("init") {
+        init();
     } else {
         query(matches.value_of("query").unwrap()).await;
     }

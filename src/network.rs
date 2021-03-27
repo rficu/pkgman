@@ -67,7 +67,7 @@ pub async fn query(pkg: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
 pub async fn update() -> Result<(), ipfs::IPFSError> {
 
-    for pkg in parser::parsefile(&parser::expand("pkglist.toml")).unwrap() {
+    for pkg in parser::parsefile(&parser::expand("PKGLIST.toml")).unwrap() {
         match download(&pkg.name).await {
             Ok(_) => {
                 println!("Package {} updated successfully!", pkg.name);
@@ -83,7 +83,7 @@ pub async fn update() -> Result<(), ipfs::IPFSError> {
 
 pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
-    let mut pkgs = parser::parsefilenew(&parser::expand("pkglist.toml")).unwrap();
+    let mut pkgs = parser::parsefilenew(&parser::expand("PKGLIST.toml")).unwrap();
 
     match query(name).await {
         Ok(pkg) => {
@@ -101,7 +101,7 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
             match ipfs::download(&pkg).await {
                 Ok(_) => {
                     pkgs.insert(pkg.name, new_pkg);
-                    parser::updatefilenew("pkglist.toml", pkgs);
+                    parser::updatefilenew("PKGLIST.toml", pkgs);
                     return Ok(());
                 },
                 Err(err) => return Err(err)
@@ -168,7 +168,7 @@ async fn upload_pkg(pkg: &parser::PkgInfo) -> Result<String, ipfs::IPFSError> {
 
 pub async fn add(pkgs: &mut Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
 
-    let mut own_pkgs = parser::parsefile(&parser::expand("pkglist.toml")).unwrap();
+    let mut own_pkgs = parser::parsefile(&parser::expand("PKGLIST.toml")).unwrap();
 
     for pkg in pkgs {
         match upload_pkg(pkg).await {
