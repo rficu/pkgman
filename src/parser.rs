@@ -156,3 +156,28 @@ pub fn updatefile(fname: &str, pkgs: Vec<PkgInfo>) {
         .as_bytes()
     ).unwrap();
 }
+
+pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
+
+    let path = expand(fname);
+
+    if fs::remove_file(&path).is_err() {
+        return;
+    }
+
+    let mut conf = ConfigWriter {
+        packages: Vec::new()
+    };
+
+    for (k, v) in pkgs.into_iter() {
+        conf.packages.push(v);
+    }
+
+    File::create(&path)
+    .unwrap()
+    .write_all(
+        toml::to_string(&conf)
+        .unwrap()
+        .as_bytes()
+    ).unwrap();
+}
