@@ -38,7 +38,7 @@ pub async fn upload(pkg: &parser::PkgInfo) -> Result<String, IPFSError> {
     }
 }
 
-pub async fn download(pkg: &parser::PkgInfo) -> IPFSError {
+pub async fn download(pkg: &parser::PkgInfo) -> Result<(), IPFSError> {
     let client = IpfsClient::default();
 
     match client
@@ -52,16 +52,19 @@ pub async fn download(pkg: &parser::PkgInfo) -> IPFSError {
             sha256.update(&res);
 
             if pkg.sha256 != format!("{:x}", sha256.finalize()) {
-                return IPFSError::ChecksumMistmatch;
+                return Err(IPFSError::ChecksumMistmatch);
             }
 
             File::create(format!("{}/{}", "packages", pkg.name))
                 .unwrap()
                 .write_all(&res)
                 .unwrap();
-        }
-        Err(e) => println!("error getting file: {}", e)
-    }
 
-    return IPFSError::Success;
+            return Ok(())
+        }
+        Err(e) => {
+            println!("error getting file: {}", e);
+            return Err(IPFSError::Unknown);
+        }
+    }
 }
