@@ -12,7 +12,6 @@ use crate::ipfs;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Commands {
-    Query,
     Upload,
     Update
 }
@@ -256,38 +255,6 @@ pub async fn add(pkgs: &mut Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError>
     Ok(())
 }
 
-fn handle_query(
-    stream:  &mut TcpStream,
-    map:     &HashMap<String, parser::PkgInfo>,
-    request: &Request)
-{
-    let mut response = Response {
-        status: ipfs::IPFSError::Success,
-        info: Vec::new()
-    };
-
-    match map.get(&request.info[0].name) {
-        Some(pkg) => {
-            response.info.push(parser::PkgInfo {
-                name:    pkg.name.clone(),
-                version: pkg.version.clone(),
-                sha256:  pkg.sha256.clone(),
-                path:    String::new(),
-                ipfs:    pkg.ipfs.clone(),
-            });
-        },
-        None => {
-            response.status = ipfs::IPFSError::NotFound
-        }
-    };
-
-    stream.write(
-        toml::to_string(&response)
-        .unwrap()
-        .as_bytes()
-    ).unwrap();
-}
-
 fn handle_upload(
     stream:  &mut TcpStream,
     map:     &mut HashMap<String, parser::PkgInfo>,
@@ -404,9 +371,6 @@ pub fn bootstrap() {
                         ).unwrap();
 
                         match req.cmd {
-                            Commands::Query => {
-                                handle_query(&mut stream, &map, &req);
-                            },
                             Commands::Upload => {
                                 handle_upload(&mut stream, &mut map, &mut req);
                             },

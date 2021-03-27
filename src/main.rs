@@ -43,8 +43,8 @@ async fn download(name: &str) {
     };
 }
 
-fn query(name: &str) {
-    let pkginfo = match network::query(name) {
+async fn query(name: &str) {
+    let pkginfo = match network::query(name).await {
         Ok(info) => info,
         Err(err) => match err {
             ipfs::IPFSError::NotFound => {
@@ -107,6 +107,6 @@ async fn main() {
     } else if matches.is_present("download") {
         download(matches.value_of("download").unwrap()).await;
     } else {
-        query(matches.value_of("query").unwrap());
+        query(matches.value_of("query").unwrap()).await;
     }
 }
