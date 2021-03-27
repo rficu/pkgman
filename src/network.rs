@@ -108,41 +108,31 @@ pub async fn update(config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError
 
 pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
-    let mut pkgs = parser::parsefile(&parser::expand("pkglist.toml")).unwrap();
+    let mut pkgs = parser::parsefilenew(&parser::expand("pkglist.toml")).unwrap();
 
     match query(name).await {
         Ok(pkg) => {
-            // make sure we don't have the latest version of the software already
-            let mut idx: usize = usize::MAX;
+            let mut new_pkg = pkg.clone();
 
-            for (i, our_pkg) in pkgs.iter().enumerate() {
-                if our_pkg.name == pkg.name {
-                    idx = i;
-                    if our_pkg.version == pkg.version {
+            match pkgs.get(name) {
+                Some(our_pkg) => {
+                    if pkg.version == our_pkg.version {
                         return Err(ipfs::IPFSError::AlreadyExists);
                     }
-                }
+                },
+                None => { }
             }
 
-            let ret = ipfs::download(&pkg).await;
-
-            if ret != ipfs::IPFSError::Success {
-                return Err(ret);
+            match ipfs::download(&pkg).await {
+                Ok(_) => {
+                    pkgs.insert(pkg.name, new_pkg);
+                    parser::updatefilenew("pkglist.toml", pkgs);
+                    return Ok(());
+                },
+                Err(err) => return Err(err)
             }
-
-            if idx != usize::MAX {
-                pkgs[idx].ipfs    = pkg.ipfs.clone();
-                pkgs[idx].version = pkg.version.clone();
-            } else {
-                pkgs.push(pkg);
-            }
-
-            parser::updatefile("pkglist.toml", pkgs);
-            return Ok(());
         },
-        Err(err) => {
-            return Err(err);
-        }
+        Err(err) => return Err(err)
     }
 }
 
