@@ -6,6 +6,9 @@ use std::io::{Read, Write};
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use version_compare::{CompOp, VersionCompare};
+use futures::{select, future, FutureExt, StreamExt, TryStreamExt};
+use std::time::Duration;
+use tokio::time::*;
 
 use crate::parser;
 use crate::ipfs;
@@ -28,66 +31,39 @@ struct Response {
     info: Vec<parser::PkgInfo>
 }
 
-pub fn query(package: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
+pub async fn query(pkg: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
-    let mut data = [0 as u8; 1024];
-    let mut ret  = parser::PkgInfo {
-        name:    String::new(),
-        version: String::new(),
-        path:    String::new(),
-        sha256:  String::new(),
-        ipfs:    String::new()
-    };
+    ipfs::get_client().pubsub_pub(ipfs::PUBSUB_TOPIC_QUERY, pkg).await.unwrap();
 
-    match TcpStream::connect("127.0.0.1:3333") {
-        Ok(mut stream) => {
-            let mut request = Request {
-                cmd: Commands::Query,
-                info: Vec::new()
-            };
+    loop {
+        match tokio::time::timeout(
+            Duration::from_secs(3),
+            ipfs::get_client().pubsub_sub(ipfs::PUBSUB_TOPIC_QURY_RESP, false).next()).await
+        {
+            Ok(response) => {
+                match response {
+                    Some(msg) => {
+                        let ret: parser::PkgInfo = toml::from_str(
+                            std::str::from_utf8(
+                                &base64::decode(msg.unwrap().data.unwrap()).unwrap()
+                            ).unwrap()
+                        ).unwrap();
 
-            request.info.push(parser::PkgInfo {
-                name:    package.to_string(),
-                version: String::new(),
-                path:    String::new(),
-                sha256:  String::new(),
-                ipfs:    String::new()
-            });
-
-            stream.write(
-                toml::to_string(&request)
-                .unwrap()
-                .as_bytes()
-            ).unwrap();
-
-            match stream.read(&mut data) {
-                Ok(size) => {
-                    let res: Response = toml::from_str(
-                        std::str::from_utf8(&data[0..size]).unwrap()
-                    ).unwrap();
-
-                    if res.status != ipfs::IPFSError::Success {
-                        return Err(res.status);
+                        if ret.name == pkg {
+                            return Ok(ret);
+                        }
+                    },
+                    None => {
+                        println!("None");
+                        return Err(ipfs::IPFSError::NotFound);
                     }
-
-                    ret.name    = res.info[0].name.clone();
-                    ret.version = res.info[0].version.clone();
-                    ret.sha256  = res.info[0].sha256.clone();
-                    ret.ipfs    = res.info[0].ipfs.clone();
-                },
-                Err(e) => {
-                    println!("Failed to receive data: {}", e);
-                    return Err(ipfs::IPFSError::Unknown);
                 }
+            },
+            Err(_err) => {
+                return Err(ipfs::IPFSError::NotFound);
             }
-        },
-        Err(e) => {
-            println!("Failed to connect: {}", e);
-            return Err(ipfs::IPFSError::UnableToConnect);
         }
     }
-
-    return Ok(ret);
 }
 
 pub async fn update(config: &Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError> {
@@ -134,7 +110,7 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
     let mut pkgs = parser::parsefile(&parser::expand("pkglist.toml")).unwrap();
 
-    match query(name) {
+    match query(name).await {
         Ok(pkg) => {
             // make sure we don't have the latest version of the software already
             let mut idx: usize = usize::MAX;
