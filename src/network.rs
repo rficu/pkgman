@@ -123,11 +123,12 @@ async fn upload_pkg(pkg: &parser::PkgInfo) -> Result<String, ipfs::IPFSError> {
             };
 
             request.info.push(parser::PkgInfo {
-                name:    pkg.name.clone(),
-                version: pkg.version.clone(),
-                path:    String::new(),
-                sha256:  pkg.sha256.clone(),
-                ipfs:    String::new()
+                name:      pkg.name.clone(),
+                version:   pkg.version.clone(),
+                path:      String::new(),
+                sha256:    pkg.sha256.clone(),
+                ipfs:      String::new(),
+                signature: String::new()
             });
 
             stream.write(
@@ -175,11 +176,12 @@ pub async fn add(pkgs: &mut Vec<parser::PkgInfo>) -> Result<(), ipfs::IPFSError>
             Ok(ipfs) => {
                 // TODO remove "pkg.name" from "own_pkgs" (hashmap?)
                 own_pkgs.push(parser::PkgInfo {
-                    name:    pkg.name.clone(),
-                    version: pkg.version.clone(),
-                    path:    String::new(),
-                    sha256:  pkg.sha256.clone(),
-                    ipfs:    ipfs.clone()
+                    name:      pkg.name.clone(),
+                    version:   pkg.version.clone(),
+                    path:      String::new(),
+                    sha256:    pkg.sha256.clone(),
+                    ipfs:      ipfs.clone(),
+                    signature: String::new()
                 });
             },
             Err(err) => {

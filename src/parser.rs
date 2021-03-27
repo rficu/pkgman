@@ -19,11 +19,12 @@ pub enum ParserError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PkgInfo {
-    pub name:    String,
-    pub version: String,
-    pub path:    String,
-    pub sha256:  String,
-    pub ipfs:    String
+    pub name:      String,
+    pub version:   String,
+    pub path:      String,
+    pub sha256:    String,
+    pub ipfs:      String,
+    pub signature: String
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -41,11 +42,12 @@ struct Config {
 
 #[derive(Debug, Deserialize)]
 struct PkgInfoInternal {
-    name:    Option<String>,
-    version: Option<String>,
-    path:    Option<String>,
-    sha256:  Option<String>,
-    ipfs:    Option<String>
+    name:      Option<String>,
+    version:   Option<String>,
+    path:      Option<String>,
+    sha256:    Option<String>,
+    ipfs:      Option<String>,
+    signature: Option<String>
 }
 
 #[derive(Serialize)]
@@ -93,11 +95,12 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
 
     for val in config.packages.unwrap() {
         res.push(PkgInfo {
-            name:    val.name.unwrap(),
-            version: val.version.unwrap(),
-            sha256:  val.sha256.unwrap(),
-            path:    val.path.unwrap_or_else(|| "".to_string()),
-            ipfs:    val.ipfs.unwrap_or_else(|| "".to_string())
+            name:      val.name.unwrap(),
+            version:   val.version.unwrap(),
+            sha256:    val.sha256.unwrap(),
+            path:      val.path.unwrap_or_else(|| "".to_string()),
+            ipfs:      val.ipfs.unwrap_or_else(|| "".to_string()),
+            signature: val.signature.unwrap_or_else(|| "".to_string())
         });
     }
 
@@ -130,11 +133,12 @@ pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError
     for val in config.packages.unwrap() {
         let pkgname = val.name.unwrap();
         map.insert(pkgname.clone(), PkgInfo {
-            name:    pkgname.clone(),
-            version: val.version.unwrap(),
-            sha256:  val.sha256.unwrap(),
-            path:    val.path.unwrap_or_else(|| "".to_string()),
-            ipfs:    val.ipfs.unwrap_or_else(|| "".to_string())
+            name:      pkgname.clone(),
+            version:   val.version.unwrap(),
+            sha256:    val.sha256.unwrap(),
+            path:      val.path.unwrap_or_else(|| "".to_string()),
+            ipfs:      val.ipfs.unwrap_or_else(|| "".to_string()),
+            signature: val.signature.unwrap_or_else(|| "".to_string())
         });
     }
 
