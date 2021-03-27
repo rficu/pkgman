@@ -1,0 +1,17 @@
+[[packages]]
+	name = "gcc"
+	version = "10.0.2"
+	sha256 = "ace09730ea4670375f4179994ef637c249ec06c4abd835a7b98b311e3b529c89"
+	ipfs = "QmdJpG7iQ4hahTtC5CuBavUzqeWvfq4KArzayygwezbaSW"
+
+[[packages]]
+	name = "x264"
+	version = "0.160.3011 cde9a93"
+	sha256 = "40cddc5f4aabf5994c42e852088209dc644e0b6a751bfb43cb2c5c182366ffee"
+	ipfs = "QmUXHuWFdKDb5Jp3S7ZXNg766du8N938oF186yJuSx7EcV"
+
+[[packages]]
+	name = "x265"
+	version = "0.160.3011 cde9a93"
+	sha256 = "a9794bb93b5742cdaae819323f46997086f74c09e3a27229d74c3f8fc1950ea9"
+	ipfs = "Qma4g2bCUeBPkU8Rvfq1Nvm7V96NViLyD555QEEQx9AFG1"
