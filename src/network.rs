@@ -13,23 +13,6 @@ use tokio::time::*;
 use crate::parser;
 use crate::ipfs;
 
-#[derive(Debug, Serialize, Deserialize)]
-enum Commands {
-    Upload
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Request {
-    cmd:  Commands,
-    info: Vec<parser::PkgInfo>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Response {
-    status: ipfs::IPFSError,
-    info: Vec<parser::PkgInfo>
-}
-
 pub async fn query(pkg: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
     ipfs::get_client().pubsub_pub(ipfs::PUBSUB_TOPIC_QUERY, pkg).await.unwrap();
