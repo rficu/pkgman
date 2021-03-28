@@ -46,7 +46,7 @@ pub async fn query(pkg: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
 pub async fn update() -> Result<(), ipfs::IPFSError> {
 
-    for pkg in parser::parsefile(&parser::expand("PKGLIST.toml")).unwrap() {
+    for (_, pkg) in parser::get_pkgs(&parser::expand("PKGLIST.toml")).unwrap().into_iter() {
         match download(&pkg.name).await {
             Ok(_) => {
                 println!("Package {} updated successfully!", pkg.name);
@@ -62,7 +62,7 @@ pub async fn update() -> Result<(), ipfs::IPFSError> {
 
 pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
-    let mut pkgs = parser::parsefilenew(&parser::expand("PKGLIST.toml")).unwrap();
+    let mut pkgs = parser::get_pkgs(&parser::expand("PKGLIST.toml")).unwrap();
 
     match query(name).await {
         Ok(pkg) => {
@@ -80,7 +80,7 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
             match ipfs::download(&pkg).await {
                 Ok(_) => {
                     pkgs.insert(pkg.name, new_pkg);
-                    parser::updatefilenew("PKGLIST.toml", pkgs);
+                    parser::save_pkgs(&parser::expand("PKGLIST.toml"), pkgs);
                     return Ok(());
                 },
                 Err(err) => return Err(err)
@@ -140,9 +140,9 @@ pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
                         }
 
                         if accepted.len() == 0 {
-                            parser::update_keyring_default();
+                            parser::save_keyring_default();
                         } else {
-                            parser::update_keyring(accepted);
+                            parser::save_keyring(accepted);
                         }
 
                         return Ok(());

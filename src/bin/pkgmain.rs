@@ -17,7 +17,7 @@ use common::parser;
 use common::ipfs;
 
 fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, pubkey: &str) {
-    let mut signers = parser::parse_keyring_entries().unwrap();
+    let mut signers = parser::get_signers().unwrap();
     let sig         = base64::encode(keypair.sign(pubkey.as_bytes()));
 
     signers.push(parser::KeyringEntry {
@@ -27,11 +27,11 @@ fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, 
         signature: sig.to_string()
     });
 
-    parser::update_keyring(signers);
+    parser::save_keyring(signers);
 }
 
 async fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str, path: &str) {
-    let mut files  = parser::parsefilenew(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
+    let mut files  = parser::get_pkgs(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
     let buffer     = parser::get_file_contents(path);
     let mut sha256 = Sha256::new();
 
@@ -49,7 +49,7 @@ async fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version
                 signature: sig.to_string()
             });
 
-            parser::updatefilenew("PKGLIST_bootstrap.toml", files);
+            parser::save_pkgs(&parser::expand("PKGLIST_bootstrap.toml"), files);
         },
         Err(err) => {
             println!("Failed to upload {} to IPFS", name)

@@ -12,7 +12,7 @@ use crate::ipfs;
 #[actix_rt::main]
 async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
 
-    let map = parser::parsefilenew(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
+    let map = parser::get_pkgs(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
     let client = ipfs::get_client();
 
     loop {

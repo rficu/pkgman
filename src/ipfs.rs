@@ -67,7 +67,7 @@ pub async fn download(pkg: &parser::PkgInfo) -> Result<(), IPFSError> {
                 return Err(IPFSError::ChecksumMismatch);
             }
 
-            for key in parser::parse_keyring().unwrap() {
+            for key in parser::get_pubkeys().unwrap() {
                 let pbkey = signature::UnparsedPublicKey::new(
                     &signature::ED25519,
                     base64::decode(&key).unwrap()

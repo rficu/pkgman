@@ -84,7 +84,7 @@ pub fn expand(config: &str) -> String {
     return fname.into_os_string().into_string().unwrap();
 }
 
-pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError> {
+pub fn get_pkgs(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError> {
     let mut contents = String::new();
     let mut map: HashMap<String, PkgInfo> = HashMap::new();
 
@@ -121,9 +121,7 @@ pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError
     return Ok(map)
 }
 
-pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
-
-    let path = expand(fname);
+pub fn save_pkgs(path: &str, pkgs: HashMap<String, PkgInfo>) {
 
     if fs::remove_file(&path).is_err() {
         return;
@@ -146,7 +144,7 @@ pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
     ).unwrap();
 }
 
-pub fn parse_keyring() -> Result<Vec<String>, ParserError> {
+pub fn get_pubkeys() -> Result<Vec<String>, ParserError> {
 
     let mut contents = String::new();
     let mut res: Vec<String> = Vec::new();
@@ -177,7 +175,7 @@ pub fn parse_keyring() -> Result<Vec<String>, ParserError> {
     return Ok(res)
 }
 
-pub fn parse_keyring_entries() -> Result<Vec<KeyringEntry>, ParserError> {
+pub fn get_signers() -> Result<Vec<KeyringEntry>, ParserError> {
 
     let mut contents = String::new();
     let mut res: Vec<KeyringEntry> = Vec::new();
@@ -234,11 +232,11 @@ fn update_keyring_internal(signers: Vec<KeyringEntry>) {
     ).unwrap();
 }
 
-pub fn update_keyring(signers: Vec<KeyringEntry>) {
+pub fn save_keyring(signers: Vec<KeyringEntry>) {
     update_keyring_internal(signers);
 }
 
-pub fn update_keyring_default() {
+pub fn save_keyring_default() {
 
     let mut vec: Vec<KeyringEntry> = Vec::new();
     let init_entry = KeyringEntry {

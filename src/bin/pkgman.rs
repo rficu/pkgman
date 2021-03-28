@@ -82,7 +82,7 @@ fn init() {
     }
 
     if !Path::new(&keyring).exists() {
-        parser::update_keyring_default();
+        parser::save_keyring_default();
     }
 
     if !Path::new(&config).exists() {
