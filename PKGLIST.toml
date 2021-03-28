@@ -1,20 +1,20 @@
 [[packages]]
 	name = "gcc"
 	version = "10.0.2"
-	sha256 = "ace09730ea4670375f4179994ef637c249ec06c4abd835a7b98b311e3b529c89"
+	sha256 = "4ce09730ea4670375f4179994ef637c249ec06c4abd835a7b98b311e3b529c89"
 	ipfs = "QmdJpG7iQ4hahTtC5CuBavUzqeWvfq4KArzayygwezbaSW"
-	signature = "gBwmgB9B8CVfz95y5Bz+0s7bk3SiCJtNd1llSyd69FEpTEooWz9UaOsoKJ7ZYgUGm5OvRyN91il+SHQn2X6uDg=="
+	signature = "SufsB52XAt5snSxb/m3oAPp3kCOykVapQgQtUVLKuwrxOfx14Hc37H8LCBm8xKnHUvybyR2p6bcLbZpKa4alDQ=="
 
 [[packages]]
 	name = "x264"
 	version = "0.160.3011 cde9a93"
 	sha256 = "40cddc5f4aabf5994c42e852088209dc644e0b6a751bfb43cb2c5c182366ffee"
 	ipfs = "QmUXHuWFdKDb5Jp3S7ZXNg766du8N938oF186yJuSx7EcV"
-	signature = "9UMTAOPQAviSKEyVl7OIoEeNi1iRGehZ3/wAg9+QrU3JKn62kc79lBkAM7sODW1ndGgP+QmpPxx4oBv3b2WzDA=="
+	signature = "lmv+n7CFnkZQuQ75Vn1S2R55+BxJr4YmuMH76MzKjCtUlC3ydgybfMwaYTQ8mRroyHmOo56uR41Aqa3lkTLICg=="
 
 [[packages]]
 	name = "x265"
 	version = "0.160.3011 cde9a93"
 	sha256 = "a9794bb93b5742cdaae819323f46997086f74c09e3a27229d74c3f8fc1950ea9"
 	ipfs = "Qma4g2bCUeBPkU8Rvfq1Nvm7V96NViLyD555QEEQx9AFG1"
-	signature = "xltVcQoolT2EmUylNWWeH1qNj/DvH+ddNd3LswfWt53pmi7qprtd30g1QEkdpZzbeTHJsCsDqbULPgdL1oVODA=="
+	signature = "qy2XB/7z8CmbmY2LQ8ehOkAlw3fUW1f/FTIH9+2W5PlFYr1x9TUzOQFYmZTT91YmtFgp7i45dX5dsG7sU1C6CA=="
