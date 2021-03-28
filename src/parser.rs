@@ -160,27 +160,6 @@ pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError
     return Ok(map)
 }
 
-pub fn updatefile(fname: &str, pkgs: Vec<PkgInfo>) {
-
-    let path = expand(fname);
-
-    if fs::remove_file(&path).is_err() {
-        return;
-    }
-
-    let conf = ConfigWriter {
-        packages: pkgs
-    };
-
-    File::create(&path)
-    .unwrap()
-    .write_all(
-        toml::to_string(&conf)
-        .unwrap()
-        .as_bytes()
-    ).unwrap();
-}
-
 pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
 
     let path = expand(fname);
@@ -193,7 +172,7 @@ pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
         packages: Vec::new()
     };
 
-    for (k, v) in pkgs.into_iter() {
+    for (_, v) in pkgs.into_iter() {
         conf.packages.push(v);
     }
 

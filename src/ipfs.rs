@@ -70,7 +70,7 @@ pub async fn download(pkg: &parser::PkgInfo) -> Result<(), IPFSError> {
                     },
                     // do not exit here as there may be multiple keys of which only one will
                     // provide the correct checksum. Error is returned after the loop
-                    Err(err) => { }
+                    Err(_err) => { }
                 }
             }
 

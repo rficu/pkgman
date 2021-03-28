@@ -1,16 +1,9 @@
 extern crate toml;
 extern crate ring;
 extern crate untrusted;
-extern crate version_compare;
 
-use std::net::{TcpListener, TcpStream, Shutdown};
-use std::io::{Read, Write};
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use version_compare::{CompOp, VersionCompare};
-use futures::{select, future, FutureExt, StreamExt, TryStreamExt};
+use futures::StreamExt;
 use std::time::Duration;
-use tokio::time::*;
 use ring::signature;
 
 use crate::parser;
@@ -73,7 +66,7 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
     match query(name).await {
         Ok(pkg) => {
-            let mut new_pkg = pkg.clone();
+            let new_pkg = pkg.clone();
 
             match pkgs.get(name) {
                 Some(our_pkg) => {
@@ -140,7 +133,7 @@ pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
                                     println!("{} ({}) accepted!", signer.name, signer.email);
                                     accepted.push(signer);
                                 },
-                                Err(err) => {
+                                Err(_err) => {
                                     println!("{} ({}) rejected!", signer.name, signer.email);
                                 }
                             }

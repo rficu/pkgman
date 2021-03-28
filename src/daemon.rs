@@ -1,10 +1,8 @@
 extern crate base64;
 
-use futures::{select, future, FutureExt, StreamExt, TryStreamExt};
-use std::collections::HashMap;
+use futures::{select, future, FutureExt, TryStreamExt};
 use std::sync::mpsc;
 use std::thread;
-use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -27,7 +25,7 @@ async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
                     client.pubsub_pub(
                         ipfs::PST_PACKAGE,
                         &toml::to_string(&info).unwrap()
-                    ).await;
+                    ).await.unwrap();
                 },
                 None => {
                     println!("No package {} found", msg);
@@ -35,7 +33,7 @@ async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
             }
         } else if topic == ipfs::PST_KEYRING_QUERY {
             let mut contents = String::new();
-            let f = File::open(parser::expand("KEYRING_bootstrap.toml"))
+            File::open(parser::expand("KEYRING_bootstrap.toml"))
                 .unwrap()
                 .read_to_string(&mut contents)
                 .unwrap();
@@ -43,7 +41,7 @@ async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
             client.pubsub_pub(
                 ipfs::PST_KEYRING,
                 &contents
-            ).await;
+            ).await.unwrap();
         }
     }
 }

@@ -3,10 +3,8 @@ extern crate config;
 
 use std::fs;
 use std::fs::File;
-use std::io::Write;
 use clap::{App, Arg, AppSettings};
 use std::path::{Path, PathBuf};
-use serde::{Serialize, Deserialize};
 
 mod daemon;
 mod ipfs;
