@@ -216,6 +216,42 @@ pub fn parse_keyring() -> Result<Vec<String>, ParserError> {
     return Ok(res)
 }
 
+pub fn parse_keyring_entries() -> Result<Vec<KeyringEntry>, ParserError> {
+
+    let mut contents = String::new();
+    let mut res: Vec<KeyringEntry> = Vec::new();
+
+    let mut f = match File::open(expand("KEYRING.toml")) {
+        Ok(val)  => val,
+        Err(err) => match err.kind() {
+            ErrorKind::NotFound => return Err(ParserError::NotFoundError),
+            _                   => return Err(ParserError::GenericError),
+        }
+    };
+
+    match f.read_to_string(&mut contents) {
+        Ok(_)  => (),
+        Err(_) => return Err(ParserError::ReadError)
+    }
+
+    let config: KeyringConfigInternal = toml::from_str(&contents).unwrap();
+
+    if !config.signers.is_some() {
+        return Err(ParserError::EmptyFileError);
+    }
+
+    for val in config.signers.unwrap() {
+        res.push(KeyringEntry {
+            name:      val.name.unwrap().clone(),
+            email:     val.email.unwrap().clone(),
+            key:       val.key.unwrap().clone(),
+            signature: val.signature.unwrap().clone()
+        });
+    }
+
+    return Ok(res)
+}
+
 fn update_keyring_internal(signers: Vec<KeyringEntry>) {
 
     let path = expand("KEYRING.toml");

@@ -15,7 +15,17 @@ use common::parser;
 use common::ipfs;
 
 fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, pubkey: &str) {
-    // TODO
+    let mut signers = parser::parse_keyring_entries().unwrap();
+    let sig = base64::encode(keypair.sign(pubkey.as_bytes()));
+
+    signers.push(parser::KeyringEntry {
+        name:      name.to_string(),
+        email:     email.to_string(),
+        key:       pubkey.to_string(),
+        signature: sig.to_string()
+    });
+
+    parser::update_keyring(signers);
 }
 
 fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str, path: &str) {
