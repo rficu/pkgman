@@ -50,6 +50,18 @@ struct PkgInfoInternal {
     signature: Option<String>
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct KeyringConfig {
+    signers: Option<Vec<KeyringEntryInternal>>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct KeyringEntryInternal {
+    pub name:  Option<String>,
+    pub email: Option<String>,
+    pub key:   Option<String>
+}
+
 #[derive(Serialize)]
 struct ConfigWriter {
     packages: Vec<PkgInfo>
@@ -189,4 +201,35 @@ pub fn updatefilenew(fname: &str, pkgs: HashMap<String, PkgInfo>) {
         .unwrap()
         .as_bytes()
     ).unwrap();
+}
+
+pub fn parse_keyring() -> Result<Vec<String>, ParserError> {
+
+    let mut contents = String::new();
+    let mut res: Vec<String> = Vec::new();
+
+    let mut f = match File::open(expand("KEYRING.toml")) {
+        Ok(val)  => val,
+        Err(err) => match err.kind() {
+            ErrorKind::NotFound => return Err(ParserError::NotFoundError),
+            _                   => return Err(ParserError::GenericError),
+        }
+    };
+
+    match f.read_to_string(&mut contents) {
+        Ok(_)  => (),
+        Err(_) => return Err(ParserError::ReadError)
+    }
+
+    let config: KeyringConfig = toml::from_str(&contents).unwrap();
+
+    if !config.signers.is_some() {
+        return Err(ParserError::EmptyFileError);
+    }
+
+    for val in config.signers.unwrap() {
+        res.push(val.key.unwrap());
+    }
+
+    return Ok(res)
 }
