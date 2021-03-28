@@ -32,10 +32,10 @@ pub fn get_client() -> IpfsClient {
     return IpfsClient::default();
 }
 
-pub async fn upload(pkg: &parser::PkgInfo) -> Result<String, IPFSError> {
+pub async fn upload(path: &str) -> Result<String, IPFSError> {
 
     let client = IpfsClient::default();
-    let file = File::open(&pkg.path).unwrap();
+    let file = File::open(path).unwrap();
 
     match client.add(file).await {
         Ok(file) => return Ok(file.hash),

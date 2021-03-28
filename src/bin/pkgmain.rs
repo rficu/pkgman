@@ -1,6 +1,7 @@
 extern crate ring;
 extern crate untrusted;
 extern crate common;
+extern crate actix_rt;
 
 use ring::signature;
 use std::fs;
@@ -10,6 +11,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use clap::{App, Arg, AppSettings};
 use serde::{Serialize, Deserialize};
+use sha2::{Sha256, Digest};
 
 use common::parser;
 use common::ipfs;
@@ -28,8 +30,35 @@ fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, 
     parser::update_keyring(signers);
 }
 
-fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str, path: &str) {
-    // TODO
+async fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str, path: &str) {
+    let mut files = parser::parsefilenew(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
+
+    let mut f = File::open(&path).expect("File not found");
+    let metadata = fs::metadata(&path).expect("Failed to read file size");
+    let mut buffer = vec![0; metadata.len() as usize];
+    f.read(&mut buffer).expect("buffer overflow");
+
+    let mut sha256 = Sha256::new();
+    sha256.update(&buffer);
+    let digest = format!("{:x}", sha256.finalize());
+    let sig = base64::encode(keypair.sign(digest.as_bytes()));
+
+    match ipfs::upload(path).await {
+        Ok(ipfs) => {
+            files.insert(name.to_string(), parser::PkgInfo {
+                name:      name.to_string(),
+                version:   version.to_string(),
+                sha256:    digest,
+                ipfs:      ipfs,
+                signature: sig.to_string()
+            });
+
+            parser::updatefilenew("PKGLIST_bootstrap.toml", files);
+        },
+        Err(err) => {
+            println!("Failed to upload {} to IPFS", name)
+        }
+    }
 }
 
 fn show_usage() {
@@ -60,7 +89,8 @@ fn read_keypair(fpath: &str) -> signature::Ed25519KeyPair {
     return signature::Ed25519KeyPair::from_pkcs8(&buffer).unwrap();
 }
 
-fn main() {
+#[actix_rt::main]
+async fn main() {
 
     let matches = App::new("")
         .about("Maintainer tool for pgkman")
@@ -123,13 +153,13 @@ fn main() {
         return;
     }
 
-    if matches.is_present("update package") {
+    if matches.is_present("update-package") {
         update_package(
             &key_pair,
             matches.value_of("name").unwrap(),
             matches.value_of("version").unwrap(),
             matches.value_of("path").unwrap()
-        );
+        ).await;
 
         return;
     }
