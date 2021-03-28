@@ -33,7 +33,21 @@ fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str
 }
 
 fn show_usage() {
-    // TODO
+    println!("Keyring update:");
+    println!("\t./pkgmain \n\
+             \t\t--update-keyring\n\
+             \t\t--name rficu \n\
+             \t\t--email \"rficu@email.com\" \n\
+             \t\t--public-key \"3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y=\" \n\
+             \t\t--pkcs8 /home/rficu/.config/pkgman/pkcs8\n");
+
+    println!("Package update:");
+    println!("\t./pkgmain \n\
+             \t\t--update-package\n\
+             \t\t--name clang \n\
+             \t\t--version \"11.1.0\" \n\
+             \t\t--path /usr/bin/clang\n\
+             \t\t--pkcs8 /home/rficu/.config/pkgman/pkcs8");
 }
 
 // read a PKCS 8-formatted key pair from a file
@@ -85,7 +99,7 @@ fn main() {
                  .long("pkcs8")
                  .takes_value(true)
                  .help("Full path to the PKCS 8-formatted keypair"))
-        .arg(Arg::with_name("usages")
+        .arg(Arg::with_name("usage")
                  .short("u")
                  .long("usage")
                  .takes_value(false)
