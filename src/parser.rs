@@ -21,7 +21,6 @@ pub enum ParserError {
 pub struct PkgInfo {
     pub name:      String,
     pub version:   String,
-    pub path:      String,
     pub sha256:    String,
     pub ipfs:      String,
     pub signature: String
@@ -50,7 +49,6 @@ struct Config {
 struct PkgInfoInternal {
     name:      Option<String>,
     version:   Option<String>,
-    path:      Option<String>,
     sha256:    Option<String>,
     ipfs:      Option<String>,
     signature: Option<String>
@@ -117,7 +115,6 @@ pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
             name:      val.name.unwrap(),
             version:   val.version.unwrap(),
             sha256:    val.sha256.unwrap(),
-            path:      val.path.unwrap_or_else(|| "".to_string()),
             ipfs:      val.ipfs.unwrap_or_else(|| "".to_string()),
             signature: val.signature.unwrap_or_else(|| "".to_string())
         });
@@ -155,7 +152,6 @@ pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError
             name:      pkgname.clone(),
             version:   val.version.unwrap(),
             sha256:    val.sha256.unwrap(),
-            path:      val.path.unwrap_or_else(|| "".to_string()),
             ipfs:      val.ipfs.unwrap_or_else(|| "".to_string()),
             signature: val.signature.unwrap_or_else(|| "".to_string())
         });
