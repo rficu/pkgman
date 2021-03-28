@@ -64,6 +64,13 @@ async fn query(name: &str) {
              pkginfo.name, pkginfo.version, pkginfo.sha256, pkginfo.ipfs);
 }
 
+async fn update_keyring() {
+    match network::update_keyring().await {
+        Ok(_)    => println!("Keyring updated!"),
+        Err(err) => println!("Error occurred: {:#?}", err)
+    };
+}
+
 fn init() {
 
     let home    = std::env::var("HOME").unwrap();
@@ -77,20 +84,18 @@ fn init() {
 
     if !Path::new(&keyring).exists() {
         // TODO move this code to parser
-        #[derive(Debug, Deserialize, Serialize)]
-        struct KeyringWriter {
-            signers: Vec<parser::KeyringEntry>
-        }
 
         let mut vec: Vec<parser::KeyringEntry> = Vec::new();
         let init_entry = parser::KeyringEntry {
-            name:  String::from("rficu"),
-            email: String::from("rficu@email.com"),
-            key:   String::from("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y=")
+            name:      String::from("rficu"),
+            email:     String::from("rficu@email.com"),
+            key:       String::from("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y="),
+            signature: String::from("+Bl5DtPMfKsxKd4eNQybgpbcrF70TuyMfp3Eyu8xQ1CWkBrhDEcx0jUO084EMZ7dbVw/v+0x0MMkbX/gZlGvBQ==")
+
         };
         vec.push(init_entry);
 
-        let conf = KeyringWriter {
+        let conf = parser::KeyringConfig {
             signers: vec
         };
 
@@ -139,6 +144,11 @@ async fn main() {
                  .long("init")
                  .takes_value(false)
                  .help("Create ~/.config/pkgman/{keyring/,PKGLIST.toml} files"))
+        .arg(Arg::with_name("update-keyring")
+                 .short("k")
+                 .long("update-keyring")
+                 .takes_value(false)
+                 .help("Query the information of all maintainers from the network"))
         .get_matches();
 
     if matches.is_present("daemon") {
@@ -147,6 +157,8 @@ async fn main() {
         update().await;
     } else if matches.is_present("download") {
         download(matches.value_of("download").unwrap()).await;
+    } else if matches.is_present("update-keyring") {
+        update_keyring().await;
     } else if matches.is_present("init") {
         init();
     } else {
