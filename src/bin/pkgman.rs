@@ -1,15 +1,16 @@
 extern crate actix_rt;
 extern crate config;
+extern crate common;
 
 use std::fs;
 use std::fs::File;
 use clap::{App, Arg, AppSettings};
 use std::path::{Path, PathBuf};
 
-mod daemon;
-mod ipfs;
-mod network;
-mod parser;
+use common::daemon;
+use common::network;
+use common::parser;
+use common::ipfs;
 
 async fn update() {
     match network::update().await {

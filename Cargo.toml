@@ -4,6 +4,18 @@ version = "0.1.0"
 authors = ["rficu <rficu@airmail.cc>"]
 edition = "2018"
 
+[lib]
+name = "common"
+path = "src/common.rs"
+
+[[bin]]
+name = "pkgman"
+path = "src/bin/pkgman.rs"
+
+[[bin]]
+name = "pkgmain"
+path = "src/bin/pkgmain.rs"
+
 [dependencies]
 config          = "0.10"
 clap            = "2.33"
