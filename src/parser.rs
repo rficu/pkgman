@@ -291,3 +291,12 @@ pub fn update_keyring_default() {
     vec.push(init_entry);
     update_keyring_internal(vec);
 }
+
+pub fn get_file_contents(path: &str) -> Vec<u8> {
+    let mut f = File::open(&path).expect("File not found");
+    let metadata = fs::metadata(&path).expect("Failed to read file size");
+    let mut buffer = vec![0; metadata.len() as usize];
+    f.read(&mut buffer).expect("buffer overflow");
+
+    return buffer;
+}

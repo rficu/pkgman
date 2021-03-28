@@ -18,7 +18,7 @@ use common::ipfs;
 
 fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, pubkey: &str) {
     let mut signers = parser::parse_keyring_entries().unwrap();
-    let sig = base64::encode(keypair.sign(pubkey.as_bytes()));
+    let sig         = base64::encode(keypair.sign(pubkey.as_bytes()));
 
     signers.push(parser::KeyringEntry {
         name:      name.to_string(),
@@ -31,14 +31,10 @@ fn update_keyring(keypair: &signature::Ed25519KeyPair, name: &str, email: &str, 
 }
 
 async fn update_package(keypair: &signature::Ed25519KeyPair, name: &str, version: &str, path: &str) {
-    let mut files = parser::parsefilenew(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
-
-    let mut f = File::open(&path).expect("File not found");
-    let metadata = fs::metadata(&path).expect("Failed to read file size");
-    let mut buffer = vec![0; metadata.len() as usize];
-    f.read(&mut buffer).expect("buffer overflow");
-
+    let mut files  = parser::parsefilenew(&parser::expand("PKGLIST_bootstrap.toml")).unwrap();
+    let buffer     = parser::get_file_contents(path);
     let mut sha256 = Sha256::new();
+
     sha256.update(&buffer);
     let digest = format!("{:x}", sha256.finalize());
     let sig = base64::encode(keypair.sign(digest.as_bytes()));
@@ -80,13 +76,8 @@ fn show_usage() {
 }
 
 // read a PKCS 8-formatted key pair from a file
-fn read_keypair(fpath: &str) -> signature::Ed25519KeyPair {
-    let mut f = File::open(&fpath).expect("File not found");
-    let metadata = fs::metadata(&fpath).expect("Failed to read file size");
-    let mut buffer = vec![0; metadata.len() as usize];
-    f.read(&mut buffer).expect("buffer overflow");
-
-    return signature::Ed25519KeyPair::from_pkcs8(&buffer).unwrap();
+fn read_keypair(path: &str) -> signature::Ed25519KeyPair {
+    return signature::Ed25519KeyPair::from_pkcs8(&parser::get_file_contents(path)).unwrap();
 }
 
 #[actix_rt::main]
