@@ -20,13 +20,6 @@ async fn update() {
     };
 }
 
-async fn add(fname: &str) {
-    match network::add(&mut parser::parsefile(fname).unwrap()).await {
-        Ok(_)    => (),
-        Err(err) => println!("Error occurred: {:#?}", err)
-    };
-}
-
 async fn download(name: &str) {
     match network::download(name).await {
         Ok(_) => {
@@ -131,11 +124,6 @@ async fn main() {
                  .long("update")
                  .takes_value(false)
                  .help("Update all packages"))
-        .arg(Arg::with_name("add")
-                 .short("a")
-                 .long("add")
-                 .takes_value(true)
-                 .help("Add package"))
         .arg(Arg::with_name("download")
                  .short("d")
                  .long("download")
@@ -157,8 +145,6 @@ async fn main() {
         daemon::daemon().await;
     } else if matches.is_present("update") {
         update().await;
-    } else if matches.is_present("add") {
-        add(matches.value_of("add").unwrap()).await;
     } else if matches.is_present("download") {
         download(matches.value_of("download").unwrap()).await;
     } else if matches.is_present("init") {
