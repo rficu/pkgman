@@ -109,7 +109,8 @@ pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
             Ok(response) => {
                 match response {
                     Some(msg) => {
-                        let trusted = base64::decode("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y=").unwrap();
+                        let trusted_ascii = "3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y=";
+                        let trusted = base64::decode(trusted_ascii).unwrap();
                         let mut accepted: Vec<parser::KeyringEntry> = Vec::new();
 
                         let signers: parser::KeyringConfig = toml::from_str(
@@ -119,6 +120,18 @@ pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
                         ).unwrap();
 
                         for signer in signers.signers {
+                            // as a malicious third-party might want to DoS the system, he may
+                            // distribute incorrect KEYRING.toml file that contains only invalid
+                            // entries which prevents the user from downloading any packages as all
+                            // signature verifications fail.
+                            //
+                            // To prevent this from happening, always add the initial node's
+                            // information to KEYRING.toml so there's always at least one public
+                            // key that can be used to verify the packages
+                            if signer.key == trusted_ascii {
+                                continue;
+                            }
+
                             let pbkey = signature::UnparsedPublicKey::new(&signature::ED25519, &trusted);
                             let sig = base64::decode(&signer.signature).unwrap();
 
@@ -134,10 +147,11 @@ pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
                         }
 
                         if accepted.len() == 0 {
-                            return Err(ipfs::IPFSError::SignatureMismatch);
+                            parser::update_keyring_default();
+                        } else {
+                            parser::update_keyring(accepted);
                         }
 
-                        parser::update_keyring(accepted);
                         return Ok(());
                     },
                     None => {

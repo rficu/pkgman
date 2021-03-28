@@ -83,29 +83,7 @@ fn init() {
     }
 
     if !Path::new(&keyring).exists() {
-        // TODO move this code to parser
-
-        let mut vec: Vec<parser::KeyringEntry> = Vec::new();
-        let init_entry = parser::KeyringEntry {
-            name:      String::from("rficu"),
-            email:     String::from("rficu@email.com"),
-            key:       String::from("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y="),
-            signature: String::from("+Bl5DtPMfKsxKd4eNQybgpbcrF70TuyMfp3Eyu8xQ1CWkBrhDEcx0jUO084EMZ7dbVw/v+0x0MMkbX/gZlGvBQ==")
-
-        };
-        vec.push(init_entry);
-
-        let conf = parser::KeyringConfig {
-            signers: vec
-        };
-
-        File::create(&keyring)
-        .unwrap()
-        .write_all(
-            toml::to_string(&conf)
-            .unwrap()
-            .as_bytes()
-        ).unwrap();
+        parser::update_keyring_default();
     }
 
     if !Path::new(&config).exists() {

@@ -241,14 +241,15 @@ pub fn parse_keyring() -> Result<Vec<String>, ParserError> {
     return Ok(res)
 }
 
-pub fn update_keyring(signers: Vec<KeyringEntry>) {
+fn update_keyring_internal(signers: Vec<KeyringEntry>) {
+
     let path = expand("KEYRING.toml");
 
     if fs::remove_file(&path).is_err() {
         return;
     }
 
-    let mut conf = KeyringConfig {
+    let conf = KeyringConfig {
         signers: signers
     };
 
@@ -259,4 +260,23 @@ pub fn update_keyring(signers: Vec<KeyringEntry>) {
         .unwrap()
         .as_bytes()
     ).unwrap();
+}
+
+pub fn update_keyring(signers: Vec<KeyringEntry>) {
+    update_keyring_internal(signers);
+}
+
+pub fn update_keyring_default() {
+
+    let mut vec: Vec<KeyringEntry> = Vec::new();
+    let init_entry = KeyringEntry {
+        name:      String::from("rficu"),
+        email:     String::from("rficu@email.com"),
+        key:       String::from("3c2PgNisX4vOumXAYVETS1aDKLHYEuhKSo7i1xnwr2Y="),
+        signature: String::from("+Bl5DtPMfKsxKd4eNQybgpbcrF70TuyMfp3Eyu8xQ1CWkBrhDEcx0jUO084EMZ7dbVw/v+0x0MMkbX/gZlGvBQ==")
+
+    };
+
+    vec.push(init_entry);
+    update_keyring_internal(vec);
 }
