@@ -20,12 +20,12 @@ async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
     loop {
         let (topic, msg) = rx.recv().unwrap();
 
-        if topic == ipfs::PUBSUB_TOPIC_QUERY {
+        if topic == ipfs::PST_PACKAGE_QUERY {
             match map.get(&msg) {
                 Some(info) => {
                     println!("package {} found!", msg);
                     client.pubsub_pub(
-                        ipfs::PUBSUB_TOPIC_QURY_RESP,
+                        ipfs::PST_PACKAGE,
                         &toml::to_string(&info).unwrap()
                     ).await;
                 },
@@ -33,15 +33,15 @@ async fn handle_query(rx: mpsc::Receiver<(&'static str, String)>) {
                     println!("No package {} found", msg);
                 }
             }
-        } else if topic == ipfs::PUBSUB_TOPIC_KEYRING_QUERY {
+        } else if topic == ipfs::PST_KEYRING_QUERY {
             let mut contents = String::new();
-            let f = File::open(parser::expand("KEYRING.toml"))
+            let f = File::open(parser::expand("KEYRING_bootstrap.toml"))
                 .unwrap()
                 .read_to_string(&mut contents)
                 .unwrap();
 
             client.pubsub_pub(
-                ipfs::PUBSUB_TOPIC_KEYRING,
+                ipfs::PST_KEYRING,
                 &contents
             ).await;
         }
@@ -71,10 +71,10 @@ pub async fn daemon() {
 
     let mut sub_query = {
         ipfs::get_client()
-            .pubsub_sub(ipfs::PUBSUB_TOPIC_QUERY, false)
+            .pubsub_sub(ipfs::PST_PACKAGE_QUERY, false)
             .try_for_each(|msg| {
                 tx.send((
-                    ipfs::PUBSUB_TOPIC_QUERY,
+                    ipfs::PST_PACKAGE_QUERY,
                     std::str::from_utf8(
                         &base64::decode(msg.data.unwrap()).unwrap()
                     ).unwrap().to_owned())
@@ -86,10 +86,10 @@ pub async fn daemon() {
 
     let mut sub_keyring = {
         ipfs::get_client()
-            .pubsub_sub(ipfs::PUBSUB_TOPIC_KEYRING_QUERY, false)
+            .pubsub_sub(ipfs::PST_KEYRING_QUERY, false)
             .try_for_each(|msg| {
                 tx.send((
-                    ipfs::PUBSUB_TOPIC_KEYRING_QUERY,
+                    ipfs::PST_KEYRING_QUERY,
                     std::str::from_utf8(
                         &base64::decode(msg.data.unwrap()).unwrap()
                     ).unwrap().to_owned())

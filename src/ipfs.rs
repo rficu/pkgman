@@ -22,11 +22,11 @@ pub enum IPFSError {
     SignatureMismatch
 }
 
-// TODO unify names of topics
-pub static PUBSUB_TOPIC_QUERY:         &'static str = "pkgman_sub_query";
-pub static PUBSUB_TOPIC_QURY_RESP:     &'static str = "pkgman_sub_query_response";
-pub static PUBSUB_TOPIC_KEYRING:       &'static str = "pkgman_sub_keyring_query";
-pub static PUBSUB_TOPIC_KEYRING_QUERY: &'static str = "pkgman_sub_keyring";
+// Publish/Subscribe Topics (PST)
+pub static PST_PACKAGE:       &'static str = "pkgman_sub_query";
+pub static PST_PACKAGE_QUERY: &'static str = "pkgman_sub_query_response";
+pub static PST_KEYRING:       &'static str = "pkgman_sub_keyring_query";
+pub static PST_KEYRING_QUERY: &'static str = "pkgman_sub_keyring";
 
 pub fn get_client() -> IpfsClient {
     return IpfsClient::default();

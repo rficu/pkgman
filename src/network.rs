@@ -18,12 +18,12 @@ use crate::ipfs;
 
 pub async fn query(pkg: &str) -> Result<parser::PkgInfo, ipfs::IPFSError> {
 
-    ipfs::get_client().pubsub_pub(ipfs::PUBSUB_TOPIC_QUERY, pkg).await.unwrap();
+    ipfs::get_client().pubsub_pub(ipfs::PST_PACKAGE_QUERY, pkg).await.unwrap();
 
     loop {
         match tokio::time::timeout(
             Duration::from_secs(3),
-            ipfs::get_client().pubsub_sub(ipfs::PUBSUB_TOPIC_QURY_RESP, false).next()).await
+            ipfs::get_client().pubsub_sub(ipfs::PST_PACKAGE, false).next()).await
         {
             Ok(response) => {
                 match response {
@@ -99,12 +99,12 @@ pub async fn download(name: &str) -> Result<(), ipfs::IPFSError> {
 
 pub async fn update_keyring() -> Result<(), ipfs::IPFSError> {
 
-    ipfs::get_client().pubsub_pub(ipfs::PUBSUB_TOPIC_KEYRING_QUERY, "update").await.unwrap();
+    ipfs::get_client().pubsub_pub(ipfs::PST_KEYRING_QUERY, "update").await.unwrap();
 
     loop {
         match tokio::time::timeout(
             Duration::from_secs(3),
-            ipfs::get_client().pubsub_sub(ipfs::PUBSUB_TOPIC_KEYRING, false).next()).await
+            ipfs::get_client().pubsub_sub(ipfs::PST_KEYRING, false).next()).await
         {
             Ok(response) => {
                 match response {
