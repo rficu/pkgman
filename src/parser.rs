@@ -84,45 +84,6 @@ pub fn expand(config: &str) -> String {
     return fname.into_os_string().into_string().unwrap();
 }
 
-pub fn parsefile(fname: &str) -> Result<Vec<PkgInfo>, ParserError> {
-    let mut contents = String::new();
-
-    let mut f = match File::open(fname) {
-        Ok(val)  => val,
-        Err(err) => match err.kind() {
-            ErrorKind::NotFound => return Err(ParserError::NotFoundError),
-            _                   => return Err(ParserError::GenericError),
-        }
-    };
-
-    match f.read_to_string(&mut contents) {
-        Ok(_)  => (),
-        Err(_) => return Err(ParserError::ReadError)
-    }
-
-    // TODO check error
-    let config: Config = toml::from_str(&contents).unwrap();
-
-    if !config.packages.is_some() {
-        println!("Input file does not contain any packages!");
-        return Err(ParserError::EmptyFileError);
-    }
-
-    let mut res: Vec<PkgInfo> = Vec::new();
-
-    for val in config.packages.unwrap() {
-        res.push(PkgInfo {
-            name:      val.name.unwrap(),
-            version:   val.version.unwrap(),
-            sha256:    val.sha256.unwrap(),
-            ipfs:      val.ipfs.unwrap_or_else(|| "".to_string()),
-            signature: val.signature.unwrap_or_else(|| "".to_string())
-        });
-    }
-
-    return Ok(res)
-}
-
 pub fn parsefilenew(fname: &str) -> Result<HashMap<String, PkgInfo>, ParserError> {
     let mut contents = String::new();
     let mut map: HashMap<String, PkgInfo> = HashMap::new();
