@@ -33,6 +33,10 @@ who's signatures can be considered valid when packages are verified.
 If you wish to contribute to the network by replying to keyring and package queries, you can run
 the pgkman in service mode
 
+Please notice that for testing purposes, there are two different `PKGLIST.toml` file paths hardcoded:
+one for the service mode (`PKGLIST_bootstrap.toml`) and one for the normal mode (`PKGLIST.toml`) and
+the same for `KEYRING.toml`. This is to make testing easier in localhost.
+
 `./pkgman --daemon`
 
 ### Querying a package
@@ -49,10 +53,10 @@ Download a package from the network
 
 ### Updating all packages
 
-Update all packages that are in the system. It is assumed that $HOME/.cache/pkgman/PKGLIST.toml
+Update all packages that are in the system. It is assumed that `~/.cache/pkgman/PKGLIST.toml`
 file exists that contains a list of all packages that the system has.
 
-`./pkgman -- --update`
+`./pkgman --update`
 
 ## Usage of pkgmain
 
@@ -61,7 +65,7 @@ nodes to become maintainers by distributing their public keys and names in keyri
 
 ## Adding new packages
 
-This either updates the version that is currently available or adds a new package based on what 
+This either updates the version that is currently available or adds a new package based on what
 `~/.config/pkgman/PKGLIST.toml` contains.
 
 ```
